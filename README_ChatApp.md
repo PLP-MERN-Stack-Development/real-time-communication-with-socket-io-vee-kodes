@@ -11,19 +11,19 @@ A full-featured real-time chat application built with Express.js, React, Node.js
 
 ## 📋 Table of Contents
 
-- [Features](#features)
-- [Technologies Used](#technologies-used)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Environment Setup](#environment-setup)
-- [Running the Application](#running-the-application)
+- [Features](#-features)
+- [Technologies Used](#-technologies-used)
+- [Prerequisites](#-prerequisites)
+- [Installation](#-installation)
+- [Environment Setup](#-environment-setup)
+- [Running the Application](#-running-the-application)
 - [Getting Started with the Chat App](#-getting-started-with-the-chat-app)
-- [Project Structure](#project-structure)
-- [API Endpoints](#api-endpoints)
-- [Deployment](#deployment)
-- [Screenshots](#screenshots)
-- [Contributing](#contributing)
-- [License](#license)
+- [Project Structure](#-project-structure)
+- [API Endpoints](#-api-endpoints)
+- [Deployment](#-deployment)
+- [Screenshots](#-screenshots)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 
 ## ✨ Features
