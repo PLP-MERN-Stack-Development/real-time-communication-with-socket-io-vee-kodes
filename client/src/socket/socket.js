@@ -21,6 +21,7 @@ export const useSocket = () => {
   const [messages, setMessages] = useState([]);
   const [users, setUsers] = useState([]);
   const [typingUsers, setTypingUsers] = useState([]);
+  const [notifications, setNotifications] = useState([]);
 
   // Connect to socket server
   const connect = (username) => {
@@ -36,13 +37,33 @@ export const useSocket = () => {
   };
 
   // Send a message
-  const sendMessage = (message) => {
-    socket.emit('send_message', { message });
+  const sendMessage = (data) => {
+    socket.emit('send_message', data);
   };
 
   // Send a private message
   const sendPrivateMessage = (to, message) => {
     socket.emit('private_message', { to, message });
+  };
+
+  // Share file or image
+  const shareFile = (fileData) => {
+    socket.emit('share_file', fileData);
+  };
+
+  // React to a message
+  const reactToMessage = (messageId, reaction) => {
+    socket.emit('react_message', { messageId, reaction });
+  };
+
+  // Remove reaction from a message
+  const removeReaction = (messageId, reaction) => {
+    socket.emit('remove_reaction', { messageId, reaction });
+  };
+
+  // Mark message as read
+  const markAsRead = (messageId) => {
+    socket.emit('message_read', messageId);
   };
 
   // Set typing status
@@ -67,9 +88,35 @@ export const useSocket = () => {
       setMessages((prev) => [...prev, message]);
     };
 
-    const onPrivateMessage = (message) => {
+    const onReceiveChannelMessage = (message) => {
       setLastMessage(message);
       setMessages((prev) => [...prev, message]);
+    };
+
+    const onPrivateMessage = (message) => {
+      setLastMessage(message);
+      // Private messages are handled in Chat.jsx useEffect
+    };
+
+    // Task 3: File and Reaction Events
+    const onFileShared = (fileMessage) => {
+      setMessages((prev) => [...prev, fileMessage]);
+    };
+
+    const onUpdateReactions = ({ messageId, reactions }) => {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === messageId ? { ...msg, reactions } : msg
+        )
+      );
+    };
+
+    const onMessageReadUpdate = (message) => {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === message.id ? { ...msg, readBy: message.readBy } : msg
+        )
+      );
     };
 
     // User events
@@ -78,7 +125,6 @@ export const useSocket = () => {
     };
 
     const onUserJoined = (user) => {
-      // You could add a system message here
       setMessages((prev) => [
         ...prev,
         {
@@ -86,12 +132,12 @@ export const useSocket = () => {
           system: true,
           message: `${user.username} joined the chat`,
           timestamp: new Date().toISOString(),
+          type: 'join', // Add type for join styling
         },
       ]);
     };
 
     const onUserLeft = (user) => {
-      // You could add a system message here
       setMessages((prev) => [
         ...prev,
         {
@@ -99,6 +145,7 @@ export const useSocket = () => {
           system: true,
           message: `${user.username} left the chat`,
           timestamp: new Date().toISOString(),
+          type: 'leave', // Add type for greyed styling
         },
       ]);
     };
@@ -108,26 +155,62 @@ export const useSocket = () => {
       setTypingUsers(users);
     };
 
+    // Task 4: Notifications
+    const onNewMessageNotification = (notif) => {
+      setNotifications((prev) => [...prev, notif]);
+
+      // Play notification sound
+      const audio = new Audio('/notification.mp3');
+      audio.play().catch(e => console.log('Audio play failed:', e));
+
+      // Browser notification
+      if (Notification.permission === 'granted') {
+        new Notification(notif.title, { body: notif.body });
+      }
+    };
+
+    // Handle channel history
+    const onChannelHistory = (history) => {
+      setMessages(history);
+    };
+
     // Register event listeners
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('receive_message', onReceiveMessage);
+    socket.on('receive_channel_message', onReceiveChannelMessage);
     socket.on('private_message', onPrivateMessage);
+    socket.on('file_shared', onFileShared);
+    socket.on('update_reactions', onUpdateReactions);
+    socket.on('message_read_update', onMessageReadUpdate);
     socket.on('user_list', onUserList);
     socket.on('user_joined', onUserJoined);
     socket.on('user_left', onUserLeft);
     socket.on('typing_users', onTypingUsers);
+    socket.on('new_message_notification', onNewMessageNotification);
+    socket.on('channel_history', onChannelHistory);
+
+    // Request browser notification permission
+    if (Notification.permission !== 'granted') {
+      Notification.requestPermission();
+    }
 
     // Clean up event listeners
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
       socket.off('receive_message', onReceiveMessage);
+      socket.off('receive_channel_message', onReceiveChannelMessage);
       socket.off('private_message', onPrivateMessage);
+      socket.off('file_shared', onFileShared);
+      socket.off('update_reactions', onUpdateReactions);
+      socket.off('message_read_update', onMessageReadUpdate);
       socket.off('user_list', onUserList);
       socket.off('user_joined', onUserJoined);
       socket.off('user_left', onUserLeft);
       socket.off('typing_users', onTypingUsers);
+      socket.off('new_message_notification', onNewMessageNotification);
+      socket.off('channel_history', onChannelHistory);
     };
   }, []);
 
@@ -138,12 +221,16 @@ export const useSocket = () => {
     messages,
     users,
     typingUsers,
+    notifications,
     connect,
     disconnect,
     sendMessage,
     sendPrivateMessage,
+    shareFile,
+    reactToMessage,
+    markAsRead,
     setTyping,
   };
 };
 
-export default socket; 
+export default socket;
